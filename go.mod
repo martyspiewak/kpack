@@ -20,7 +20,7 @@ require (
 	github.com/spf13/pflag v1.0.5
 	github.com/stretchr/testify v1.6.1
 	github.com/vdemeester/k8s-pkg-credentialprovider v1.17.4
-	go.uber.org/zap v1.15.0
+	go.uber.org/zap v1.16.0
 	golang.org/x/crypto v0.0.0-20200622213623-75b288015ac9
 	golang.org/x/sync v0.0.0-20200625203802-6e8e738ad208
 	k8s.io/api v0.18.8

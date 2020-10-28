@@ -140,7 +140,7 @@ type ResolvedSource interface {
 	IsUnknown() bool
 	IsPollable() bool
 	ConfigChanged(lastBuild *Build) bool
-	RevisionChanged(lastBuild *Build) bool
+	RevisionChange(lastBuild *Build) RevisionChange
 	SourceConfig() SourceConfig
 }
 
@@ -153,12 +153,21 @@ const (
 	Commit  GitSourceKind = "Commit"
 )
 
+type RevisionChange struct {
+	Previous    string
+	Current     string
+}
+
 // +k8s:openapi-gen=true
 type ResolvedGitSource struct {
 	URL      string        `json:"url"`
 	Revision string        `json:"revision"`
 	SubPath  string        `json:"subPath,omitempty"`
 	Type     GitSourceKind `json:"type"`
+}
+
+func (r RevisionChange) HasChanged() bool {
+	return r.Previous != r.Current
 }
 
 func (gs *ResolvedGitSource) SourceConfig() SourceConfig {
@@ -188,12 +197,11 @@ func (gs *ResolvedGitSource) ConfigChanged(lastBuild *Build) bool {
 		gs.SubPath != lastBuild.Spec.Source.SubPath
 }
 
-func (gs *ResolvedGitSource) RevisionChanged(lastBuild *Build) bool {
+func (gs *ResolvedGitSource) RevisionChange(lastBuild *Build) RevisionChange {
 	if lastBuild.Spec.Source.Git == nil {
-		return true
+		return RevisionChange{}
 	}
-
-	return gs.Revision != lastBuild.Spec.Source.Git.Revision
+	return RevisionChange{Previous: lastBuild.Spec.Source.Git.Revision, Current: gs.Revision}
 }
 
 // +k8s:openapi-gen=true
@@ -227,8 +235,8 @@ func (bs *ResolvedBlobSource) ConfigChanged(lastBuild *Build) bool {
 		bs.SubPath != lastBuild.Spec.Source.SubPath
 }
 
-func (bs *ResolvedBlobSource) RevisionChanged(lastBuild *Build) bool {
-	return false
+func (bs *ResolvedBlobSource) RevisionChange(lastBuild *Build) RevisionChange {
+	return RevisionChange{}
 }
 
 // +k8s:openapi-gen=true
@@ -269,6 +277,6 @@ func (rs *ResolvedRegistrySource) ConfigChanged(lastBuild *Build) bool {
 		rs.SubPath != lastBuild.Spec.Source.SubPath
 }
 
-func (rs *ResolvedRegistrySource) RevisionChanged(lastBuild *Build) bool {
-	return false
+func (rs *ResolvedRegistrySource) RevisionChange(lastBuild *Build) RevisionChange {
+	return RevisionChange{}
 }

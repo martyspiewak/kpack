@@ -36,8 +36,8 @@ func (sr *SourceResolver) ConfigChanged(lastBuild *Build) bool {
 	return sr.Status.Source.ResolvedSource().ConfigChanged(lastBuild)
 }
 
-func (sr *SourceResolver) RevisionChanged(lastBuild *Build) bool {
-	return sr.Status.Source.ResolvedSource().RevisionChanged(lastBuild)
+func (sr *SourceResolver) RevisionChange(lastBuild *Build) RevisionChange {
+	return sr.Status.Source.ResolvedSource().RevisionChange(lastBuild)
 }
 
 func (sr *SourceResolver) PollingReady() bool {

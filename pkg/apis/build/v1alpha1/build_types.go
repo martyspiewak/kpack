@@ -61,7 +61,7 @@ type BuildSpec struct {
 	Source         SourceConfig     `json:"source"`
 	CacheName      string           `json:"cacheName,omitempty"`
 	// +listType
-	Bindings Bindings `json:"bindings,omitempty"`
+	Services Services `json:"bindings,omitempty"`
 	// +listType
 	Env       []corev1.EnvVar             `json:"env,omitempty"`
 	Resources corev1.ResourceRequirements `json:"resources,omitempty"`
@@ -69,14 +69,10 @@ type BuildSpec struct {
 }
 
 // +k8s:openapi-gen=true
-type Bindings []Binding
+type Services []Service
 
 // +k8s:openapi-gen=true
-type Binding struct {
-	Name        string                       `json:"name",omitempty"`
-	MetadataRef *corev1.LocalObjectReference `json:"metadataRef,omitempty"`
-	SecretRef   *corev1.LocalObjectReference `json:"secretRef,omitempty"`
-}
+type Service corev1.ObjectReference
 
 // +k8s:openapi-gen=true
 type LastBuild struct {

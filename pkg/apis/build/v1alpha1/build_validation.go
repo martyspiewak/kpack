@@ -26,7 +26,7 @@ func (bs *BuildSpec) Validate(ctx context.Context) *apis.FieldError {
 		Also(validate.Tags(bs.Tags)).
 		Also(bs.Builder.Validate(ctx).ViaField("builder")).
 		Also(bs.Source.Validate(ctx).ViaField("source")).
-		Also(bs.Bindings.Validate(ctx).ViaField("bindings")).
+		Also(bs.Services.Validate(ctx).ViaField("services")).
 		Also(bs.LastBuild.Validate(ctx).ViaField("lastBuild")).
 		Also(bs.validateImmutableFields(ctx))
 }
@@ -57,47 +57,41 @@ func (bbs *BuildBuilderSpec) Validate(ctx context.Context) *apis.FieldError {
 	return validate.Image(bbs.Image)
 }
 
-func (bs Bindings) Validate(ctx context.Context) *apis.FieldError {
+func (ss Services) Validate(ctx context.Context) *apis.FieldError {
 	var errs *apis.FieldError
 	names := map[string]int{}
-	for i, b := range bs {
+	for i, s := range ss {
 		// check name uniqueness
-		if n, ok := names[b.Name]; ok {
+		if n, ok := names[s.Name]; ok {
 			errs = errs.Also(
 				apis.ErrGeneric(
-					fmt.Sprintf("duplicate binding name %q", b.Name),
+					fmt.Sprintf("duplicate service name %q", s.Name),
 					fmt.Sprintf("[%d].name", n),
 					fmt.Sprintf("[%d].name", i),
 				),
 			)
 		}
-		names[b.Name] = i
-		errs = errs.Also(b.Validate(ctx).ViaIndex(i))
+		names[s.Name] = i
+		errs = errs.Also(s.Validate(ctx).ViaIndex(i))
 	}
 	return errs
 }
 
-var bindingNameRE = regexp.MustCompile(`^[a-z0-9\-\.]{1,253}$`)
+var serviceNameRE = regexp.MustCompile(`^[a-z0-9\-\.]{1,253}$`)
 
-func (b *Binding) Validate(context context.Context) *apis.FieldError {
+func (s *Service) Validate(context context.Context) *apis.FieldError {
 	var errs *apis.FieldError
 
-	if b.Name == "" {
+	if s.Name == "" {
 		errs = errs.Also(apis.ErrMissingField("name"))
-	} else if !bindingNameRE.MatchString(b.Name) {
-		errs = errs.Also(apis.ErrInvalidValue(b.Name, "name"))
+	} else if !serviceNameRE.MatchString(s.Name) {
+		errs = errs.Also(apis.ErrInvalidValue(s.Name, "name"))
 	}
 
-	if b.MetadataRef == nil {
-		// metadataRef is required
-		errs = errs.Also(apis.ErrMissingField("metadataRef"))
-	} else if b.MetadataRef.Name == "" {
-		errs = errs.Also(apis.ErrMissingField("metadataRef.name"))
-	}
-
-	if b.SecretRef != nil && b.SecretRef.Name == "" {
-		// secretRef is optional
-		errs = errs.Also(apis.ErrMissingField("secretRef.name"))
+	switch s.Kind {
+	case "Secret":
+	default:
+		errs = errs.Also(apis.ErrInvalidValue(s.Kind, "kind"))
 	}
 
 	return errs

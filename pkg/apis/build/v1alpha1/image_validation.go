@@ -158,5 +158,5 @@ func (ib *ImageBuild) Validate(ctx context.Context) *apis.FieldError {
 		return nil
 	}
 
-	return ib.Bindings.Validate(ctx).ViaField("bindings")
+	return ib.Services.Validate(ctx).ViaField("services")
 }

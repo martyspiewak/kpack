@@ -40,7 +40,7 @@ type BuildPodable interface {
 	GetNamespace() string
 	ServiceAccount() string
 	BuilderSpec() v1alpha1.BuildBuilderSpec
-	Bindings() []v1alpha1.Binding
+	Services() []v1alpha1.Service
 
 	BuildPod(v1alpha1.BuildPodImages, []corev1.Secret, v1alpha1.BuildPodBuilderConfig) (*corev1.Pod, error)
 }
@@ -76,9 +76,9 @@ func (g *Generator) buildAllowed(build BuildPodable) error {
 		}
 	}
 
-	for _, binding := range build.Bindings() {
-		if binding.SecretRef != nil && forbiddenSecrets[binding.SecretRef.Name] {
-			return fmt.Errorf("binding %q uses forbidden secret %q", binding.Name, binding.SecretRef.Name)
+	for _, service := range build.Services() {
+		if service.Name != "" && forbiddenSecrets[service.Name] {
+			return fmt.Errorf("service %q uses forbidden secret %q", service.Name, service.Name)
 		}
 	}
 

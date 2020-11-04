@@ -3,6 +3,7 @@ package v1alpha1
 import (
 	"encoding/json"
 	"fmt"
+	"path/filepath"
 
 	"github.com/pkg/errors"
 	corev1 "k8s.io/api/core/v1"
@@ -25,6 +26,7 @@ const (
 	cacheDirName              = "cache-dir"
 	layersDirName             = "layers-dir"
 	platformDir               = "platform-dir"
+	bindingsDir               = "bindings-dir"
 	homeDir                   = "home-dir"
 	workspaceDir              = "workspace-dir"
 	imagePullSecretsDirName   = "image-pull-secrets-dir"
@@ -69,6 +71,10 @@ var (
 	projectMetadataVolume = corev1.VolumeMount{
 		Name:      layersDirName,
 		MountPath: "/projectMetadata",
+	}
+	bindingsVolume = corev1.VolumeMount{
+		Name:      bindingsDir,
+		MountPath: "/bindings",
 	}
 	homeEnv = corev1.EnvVar{
 		Name:  "HOME",
@@ -477,35 +483,15 @@ func (b *Build) setupSecretVolumesAndArgs(secrets []corev1.Secret, filter func(s
 func (b *Build) setupBindings() ([]corev1.Volume, []corev1.VolumeMount) {
 	volumes := []corev1.Volume{}
 	volumeMounts := []corev1.VolumeMount{}
-	for _, binding := range b.Spec.Bindings {
-		metadataVolume := fmt.Sprintf("binding-metadata-%s", binding.Name)
-		volumes = append(volumes,
-			corev1.Volume{
-				Name: metadataVolume,
-				VolumeSource: corev1.VolumeSource{
-					ConfigMap: &corev1.ConfigMapVolumeSource{
-						LocalObjectReference: corev1.LocalObjectReference{
-							Name: binding.MetadataRef.Name,
-						},
-					},
-				},
-			},
-		)
-		volumeMounts = append(volumeMounts,
-			corev1.VolumeMount{
-				Name:      metadataVolume,
-				MountPath: fmt.Sprintf("%s/bindings/%s/metadata", platformVolume.MountPath, binding.Name),
-				ReadOnly:  true,
-			},
-		)
-		if binding.SecretRef != nil {
-			secretVolume := fmt.Sprintf("binding-secret-%s", binding.Name)
+	for _, service := range b.Spec.Services {
+		if service.Name != "" {
+			secretVolume := fmt.Sprintf("service-secret-%s", service.Name)
 			volumes = append(volumes,
 				corev1.Volume{
 					Name: secretVolume,
 					VolumeSource: corev1.VolumeSource{
 						Secret: &corev1.SecretVolumeSource{
-							SecretName: binding.SecretRef.Name,
+							SecretName: service.Name,
 						},
 					},
 				},
@@ -513,7 +499,7 @@ func (b *Build) setupBindings() ([]corev1.Volume, []corev1.VolumeMount) {
 			volumeMounts = append(volumeMounts,
 				corev1.VolumeMount{
 					Name:      secretVolume,
-					MountPath: fmt.Sprintf("%s/bindings/%s/secret", platformVolume.MountPath, binding.Name),
+					MountPath: filepath.Join(bindingsVolume.MountPath, service.Name),
 					ReadOnly:  true,
 				},
 			)

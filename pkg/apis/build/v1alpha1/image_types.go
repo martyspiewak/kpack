@@ -67,7 +67,7 @@ const (
 // +k8s:openapi-gen=true
 type ImageBuild struct {
 	// +listType
-	Bindings Bindings `json:"bindings,omitempty"`
+	Services Services `json:"services,omitempty"`
 	// +listType
 	Env       []corev1.EnvVar             `json:"env,omitempty"`
 	Resources corev1.ResourceRequirements `json:"resources,omitempty"`
